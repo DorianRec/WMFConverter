@@ -1,5 +1,3 @@
-// Used Cpp 20 and Visual Studio 2019
-
 #include <windows.h>
 #include <gdiplus.h>
 #include <stdio.h>
@@ -10,7 +8,13 @@ using namespace Gdiplus;
 #include <filesystem>
 namespace fs = std::filesystem;
 
-// Source: [1]
+/**
+ * Helper Method from [1]
+ *
+ * @param format
+ * @param pClsid
+ * @return
+ */
 int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 {
     UINT  num = 0;          // number of image encoders
@@ -43,14 +47,14 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
 }
 
 /**
- * Writes PNG
+ * Converts the '.wmf' file at {@code inputPath} to a '.png' file at PNGs/{@code inputPath}
  *
- * @param path
- * @return
+ * @param inputPath The location of the '.wmf' file
+ * @return 0
  */
 
 // Source: [1] [2]
-int convert(const fs::path * path) {
+int convert(const fs::path * inputPath) {
 
     // Initialize GDI+.
     GdiplusStartupInput gdiplusStartupInput;
@@ -59,37 +63,33 @@ int convert(const fs::path * path) {
 
     CLSID encoderClsid;
     Status stat;
-    Image* image = new Image(path->c_str());
+    Image* image = new Image(inputPath->c_str());
 
     // Get the CLSID of the PNG encoder.
-    GetEncoderClsid(L"image/png", &encoderClsid);
+    GetEncoderClsid(L"image/png", &encoderClsid); // TODO: Wished output format
 
     // Generate Bitmap to print to
-    int width = 1900;
-    int height = 1472;
+    int width = 1900; // TODO: Wished output width [in pixels]
+    int height = 1472; // TODO: Wished output height [in pixels]
     Bitmap* target = new Bitmap(width, height);
     Graphics* g = Graphics::FromImage(target);
     g->DrawImage(image, 0, 0, width, height);
     // end
 
-    // Build output path
-    fs::path bird = fs::path("PNGs");
-    bird /= path->string();
-    bird.replace_extension(".png");
-    // Build output
-    //std::wstring wstr = L"Bird\\";
-    //std::wstring bla = wstr + path->c_str();
-    std::cout << bird.string() << '\n';
+    // Build output inputPath
+    fs::path outputPath = fs::path("PNGs"); // TODO: Wished output folder
+    outputPath /= inputPath->string();
+    outputPath.replace_extension(".png"); // TODO: Wished output format
 
-    // Check whether target folders exists and create path
-    fs::path directories = fs::path(bird);
+    // Checks, whether target folders exists (and creates inputPath)
+    fs::path directories = fs::path(outputPath);
     directories.remove_filename();
     if (!fs::exists(directories.c_str())) {
         fs::create_directories(directories.c_str());
     }
 
     // Creates or overwrites file!
-    stat = target->Save(bird.c_str(), &encoderClsid, NULL);
+    stat = target->Save(outputPath.c_str(), &encoderClsid, NULL);
 
     if(stat == Ok)
         printf("Bird.png was saved successfully\n");
@@ -104,19 +104,17 @@ int convert(const fs::path * path) {
 int main() {
     std::string path(".");
     // Only convert files with 'wmf' extension
-    std::string ext(".wmf");
+    std::string ext(".wmf"); // TODO: Wished input format
 
     // Loop recursively through folders and recognize all files with given file extension
     for (auto &p : fs::recursive_directory_iterator(path)) {
         if (p.path().extension() == ext) {
             std::cout << p.path().stem().string() << '\n';
 
-            // copy the constant path
-            //fs::path variablePath = p.path();
-
             convert(&p.path());
         }
     }
+
     return 0;
 }
 
