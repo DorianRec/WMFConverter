@@ -1,11 +1,13 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <stdio.h>
+
 using namespace Gdiplus;
-#pragma comment (lib,"Gdiplus.lib")
+#pragma comment (lib, "Gdiplus.lib")
 
 #include <iostream>
 #include <filesystem>
+
 namespace fs = std::filesystem;
 
 /**
@@ -15,27 +17,24 @@ namespace fs = std::filesystem;
  * @param pClsid
  * @return
  */
-int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
-{
-    UINT  num = 0;          // number of image encoders
-    UINT  size = 0;         // size of the image encoder array in bytes
+int GetEncoderClsid(const WCHAR *format, CLSID *pClsid) {
+    UINT num = 0;          // number of image encoders
+    UINT size = 0;         // size of the image encoder array in bytes
 
-    ImageCodecInfo* pImageCodecInfo = NULL;
+    ImageCodecInfo *pImageCodecInfo = NULL;
 
     GetImageEncodersSize(&num, &size);
-    if(size == 0)
+    if (size == 0)
         return -1;  // Failure
 
-    pImageCodecInfo = (ImageCodecInfo*)(malloc(size));
-    if(pImageCodecInfo == NULL)
+    pImageCodecInfo = (ImageCodecInfo *) (malloc(size));
+    if (pImageCodecInfo == NULL)
         return -1;  // Failure
 
     GetImageEncoders(num, size, pImageCodecInfo);
 
-    for(UINT j = 0; j < num; ++j)
-    {
-        if( wcscmp(pImageCodecInfo[j].MimeType, format) == 0 )
-        {
+    for (UINT j = 0; j < num; ++j) {
+        if (wcscmp(pImageCodecInfo[j].MimeType, format) == 0) {
             *pClsid = pImageCodecInfo[j].Clsid;
             free(pImageCodecInfo);
             return j;  // Success
@@ -51,10 +50,9 @@ int GetEncoderClsid(const WCHAR* format, CLSID* pClsid)
  *
  * @param inputPath The location of the '.wmf' file
  * @return 0
+ * Source: [1] [2]
  */
-
-// Source: [1] [2]
-int convert(const fs::path * inputPath) {
+int convert(const fs::path *inputPath) {
 
     // Initialize GDI+.
     GdiplusStartupInput gdiplusStartupInput;
@@ -63,7 +61,7 @@ int convert(const fs::path * inputPath) {
 
     CLSID encoderClsid;
     Status stat;
-    Image* image = new Image(inputPath->c_str());
+    Image *image = new Image(inputPath->c_str());
 
     // Get the CLSID of the PNG encoder.
     GetEncoderClsid(L"image/png", &encoderClsid); // TODO: Wished output format
@@ -71,8 +69,8 @@ int convert(const fs::path * inputPath) {
     // Generate Bitmap to print to
     int width = 1900; // TODO: Wished output width [in pixels]
     int height = 1472; // TODO: Wished output height [in pixels]
-    Bitmap* target = new Bitmap(width, height);
-    Graphics* g = Graphics::FromImage(target);
+    Bitmap *target = new Bitmap(width, height);
+    Graphics *g = Graphics::FromImage(target);
     g->DrawImage(image, 0, 0, width, height);
     // end
 
@@ -91,7 +89,7 @@ int convert(const fs::path * inputPath) {
     // Creates or overwrites file!
     stat = target->Save(outputPath.c_str(), &encoderClsid, NULL);
 
-    if(stat == Ok)
+    if (stat == Ok)
         printf("Bird.png was saved successfully\n");
     else
         printf("Failure: stat = %d\n", stat);
