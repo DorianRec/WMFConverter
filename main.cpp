@@ -90,11 +90,19 @@ int convert(const fs::path *inputPath) {
     stat = target->Save(outputPath.c_str(), &encoderClsid, NULL);
 
     if (stat == Ok)
-        printf("Bird.png was saved successfully\n");
+        printf("%s was saved successfully at\n%s\n",
+               outputPath.filename().string().c_str(),
+               outputPath.string().c_str());
     else
         printf("Failure: stat = %d\n", stat);
 
     delete image;
+
+    // This prevents 'Failure: stat = 2' after approximately 90 convertions
+    delete target;
+    delete g;
+    //
+
     GdiplusShutdown(gdiplusToken);
     return 0;
 }
@@ -107,8 +115,6 @@ int main() {
     // Loop recursively through folders and recognize all files with given file extension
     for (auto &p : fs::recursive_directory_iterator(path)) {
         if (p.path().extension() == ext) {
-            std::cout << p.path().stem().string() << '\n';
-
             convert(&p.path());
         }
     }
